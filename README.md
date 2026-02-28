@@ -17,29 +17,6 @@
 
 ---
 
-## Welcome, Club Members!
-
-We're excited to have you here! This project is open for contributions from all COPS members. Whether you're fixing bugs, adding features, improving UI, or writing documentation — every contribution matters.
-
-### How to Contribute
-
-1. **Fork** this repository
-2. **Clone** your fork locally
-3. Create a new **branch** for your feature/fix
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-4. Make your changes and **commit**
-   ```bash
-   git commit -m "Add: brief description of your change"
-   ```
-5. **Push** to your fork and open a **Pull Request**
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-
----
-
 ## Tech Stack
 
 | Layer    | Technology                          |
@@ -146,10 +123,6 @@ Feedback_tech/
 | ----------------- | ----------- |
 | **Bhanu Kiran R** | Developer   |
 | **Deepak PS**     | Developer   |
-
-## Contributors
-
-We welcome contributions from all COPS members! See the [How to Contribute](#how-to-contribute) section above to get started.
 
 ---
 
