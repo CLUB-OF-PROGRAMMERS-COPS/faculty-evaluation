@@ -1,16 +1,25 @@
-# Automated Faculty Evaluation System
+<p align="center">
+  <img src="frontend/public/copslogo.png" alt="College Logo" width="150" />
+</p>
 
-A full-stack web application for collecting and managing anonymous student feedback on faculty members. Built by the **Club of Programmers (COPS)**.
+<h1 align="center">Automated Faculty Evaluation System</h1>
+
+<p align="center">
+  <b>C. Byregowda Institute of Technology</b><br/>
+  Department of Computer Science & Engineering<br/>
+  <i>Initiated under the guidance of HOD — Dr. Vasudev R</i>
+</p>
+
+<p align="center">
+  A full-stack web application for collecting and managing anonymous student feedback on faculty members.<br/>
+  Developed by the <b>Club of Programmers (COPS)</b>.
+</p>
 
 ---
 
-<p align="center">
-  <img src="frontend/public/cbitlogo.png" alt="CBIT Logo" width="200"/>
-</p>
+## Welcome, Club Members!
 
-## Welcome, CBIT Students!
-
-We're excited to have you here! This project is open for contributions from all CBIT Students. Whether you're fixing bugs, adding features, improving UI, or writing documentation — every contribution matters.
+We're excited to have you here! This project is open for contributions from all COPS members. Whether you're fixing bugs, adding features, improving UI, or writing documentation — every contribution matters.
 
 ### How to Contribute
 
@@ -123,15 +132,27 @@ Feedback_tech/
 
 ---
 
-## Contributors
+## Project Initiated By
+
+| | |
+| --- | --- |
+| **College** | C. Byregowda Institute of Technology |
+| **Department** | Computer Science & Engineering |
+| **HOD** | Dr. Vasudev R |
+
+## Developers
 
 | Name              | Role        |
 | ----------------- | ----------- |
 | **Bhanu Kiran R** | Developer   |
 | **Deepak PS**     | Developer   |
 
+## Contributors
+
+We welcome contributions from all COPS members! See the [How to Contribute](#how-to-contribute) section above to get started.
+
 ---
 
 ## License
 
-This project is maintained by the **Club of Programmers (COPS)**. All rights reserved.
+This project is maintained by the **Department of CSE, C. Byregowda Institute of Technology** in collaboration with the **Club of Programmers (COPS)**. All rights reserved.
