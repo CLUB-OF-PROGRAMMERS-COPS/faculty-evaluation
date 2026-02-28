@@ -5,7 +5,7 @@ A full-stack web application for collecting and managing anonymous student feedb
 ---
 
 <p align="center">
-  <img src="path/to/COPS_logo.png" alt="COPS Logo" width="200"/>
+  <img src="frontend/public/copslogo.png" alt="COPS Logo" width="200"/>
 </p>
 
 ## Welcome, CBIT Students!
