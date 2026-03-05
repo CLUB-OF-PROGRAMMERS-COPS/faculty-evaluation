@@ -140,7 +140,7 @@ export default function HeroPage() {
 
         {/* Footer */}
         <footer className={`w-full py-4 text-center text-gray-500 text-xs transition-all duration-700 delay-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
-          <p>Built with ❤️ by <span className="text-blue-400">Club of Programmers</span> • CBIT Kolar</p>
+          <p>Built with ❤️ by <span className="text-blue-400">CSE Branch</span> • CBIT Kolar</p>
         </footer>
       </div>
     </div>
