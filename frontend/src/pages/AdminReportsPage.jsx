@@ -1,15 +1,39 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Bar } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import html2canvas from "html2canvas";
 import { fetchAdminReport, fetchAdminSections, fetchAdminTeachers, fetchFeedbackDetails } from "../api";
 import toast from "react-hot-toast";
 
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ChartDataLabels
+);
+
 export default function AdminReportsPage() {
   const navigate = useNavigate();
+  const chartRef = useRef(null);
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState([]);
   const [sections, setSections] = useState([]);
   const [teachers, setTeachers] = useState([]);
+  const [selectedGraphKey, setSelectedGraphKey] = useState("");
   
   // Filters
   const [filterSection, setFilterSection] = useState("");
@@ -54,6 +78,26 @@ export default function AdminReportsPage() {
     if (filterTeacher && row.teacher_id !== Number(filterTeacher)) return false;
     return true;
   });
+
+  useEffect(() => {
+    if (filteredReport.length === 0) {
+      setSelectedGraphKey("");
+      return;
+    }
+
+    const exists = filteredReport.some(
+      (r) => `${r.teacher_id}-${r.section_id}-${r.batch_id}` === selectedGraphKey
+    );
+
+    if (!exists) {
+      const first = filteredReport[0];
+      setSelectedGraphKey(`${first.teacher_id}-${first.section_id}-${first.batch_id}`);
+    }
+  }, [filteredReport, selectedGraphKey]);
+
+  const selectedGraphRow = filteredReport.find(
+    (r) => `${r.teacher_id}-${r.section_id}-${r.batch_id}` === selectedGraphKey
+  );
 
   // Calculate overall average
   const overallAvg = filteredReport.length > 0
@@ -136,6 +180,11 @@ export default function AdminReportsPage() {
           "",
           summaryRow.join(","),
           avgRow.join(","),
+          "",
+          "Question-wise Average Data (for graph plotting)",
+          "Question,Q1,Q2,Q3,Q4,Q5,Q6,Q7,Q8,Q9,Q10",
+          `Average Rating,${row.q1_avg.toFixed(2)},${row.q2_avg.toFixed(2)},${row.q3_avg.toFixed(2)},${row.q4_avg.toFixed(2)},${row.q5_avg.toFixed(2)},${row.q6_avg.toFixed(2)},${row.q7_avg.toFixed(2)},${row.q8_avg.toFixed(2)},${row.q9_avg.toFixed(2)},${row.q10_avg.toFixed(2)}`,
+          "Y-Axis Range,1,2,3,4,5",
           "",
           `Overall Percentage: ${row.total_percentage.toFixed(2)}%`,
         ];
@@ -241,20 +290,109 @@ export default function AdminReportsPage() {
     return "bg-red-50";
   };
 
+  const buildQuestionSeries = (row) => {
+    if (!row) return [];
+    return Array.from({ length: 10 }, (_, idx) => {
+      const q = idx + 1;
+      return {
+        label: `Q${q}`,
+        value: Number(row[`q${q}_avg`] || 0),
+      };
+    });
+  };
+
+  const downloadGraph = () => {
+    if (!chartRef.current) {
+      toast.error("Chart not available.");
+      return;
+    }
+
+    html2canvas(chartRef.current.canvas.parentNode, {
+      backgroundColor: "#ffffff",
+      scale: 2,
+    }).then((canvas) => {
+      const link = document.createElement("a");
+      link.download = `teacher-performance-graph.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      toast.success("Graph downloaded!");
+    });
+  };
+
+  const chartData = {
+    labels: buildQuestionSeries(selectedGraphRow).map(s => s.label),
+    datasets: [
+      {
+        label: "Average Rating",
+        data: buildQuestionSeries(selectedGraphRow).map(s => s.value),
+        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+        borderColor: 'rgba(59, 130, 246, 1)',
+        borderWidth: 1,
+        borderRadius: 5,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      title: {
+        display: true,
+        text: `Question-wise Average Ratings`,
+        font: {
+          size: 16,
+          weight: 'bold',
+        },
+        padding: {
+          top: 10,
+          bottom: 30,
+        }
+      },
+      datalabels: {
+        anchor: 'end',
+        align: 'top',
+        formatter: (value) => {
+          return value.toFixed(2);
+        },
+        font: {
+          weight: 'bold',
+          size: 12,
+        },
+        color: '#374151'
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 5.5,
+        ticks: {
+          stepSize: 1,
+        },
+        grid: {
+          color: 'rgba(200, 200, 200, 0.2)',
+        }
+      },
+      x: {
+        grid: {
+          display: false,
+        }
+      }
+    },
+  };
+
   return (
     <div className="min-h-screen relative overflow-hidden bg-gray-50">
       {/* Subtle Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-cyan-50/20 to-gray-50" />
-
-      {/* Decorative Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 right-20 w-80 h-80 bg-cyan-100/40 rounded-full blur-3xl" />
         <div className="absolute bottom-20 left-20 w-96 h-96 bg-purple-100/30 rounded-full blur-3xl" />
       </div>
-
-      {/* Content */}
       <div className="relative z-10 min-h-screen">
-        {/* Header */}
         <header className="border-b border-gray-200 bg-white/90 backdrop-blur-lg sticky top-0 z-20">
           <div className="max-w-7xl mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
@@ -280,10 +418,8 @@ export default function AdminReportsPage() {
         </header>
 
         <div className="max-w-7xl mx-auto px-4 py-6">
-          {/* Filters & Actions */}
           <div className={`bg-white rounded-2xl p-6 mb-6 border border-gray-100 shadow-sm transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
             <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-end">
-              {/* Filters */}
               <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-gray-600 mb-2 font-medium">Filter by Section</label>
@@ -317,7 +453,6 @@ export default function AdminReportsPage() {
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="flex gap-3">
                 <button
                   onClick={loadData}
@@ -372,6 +507,47 @@ export default function AdminReportsPage() {
                 <p className={`text-2xl font-bold ${Number(overallPercentage) >= 80 ? 'text-emerald-600' : Number(overallPercentage) >= 60 ? 'text-amber-600' : 'text-red-600'}`}>{overallPercentage}%</p>
                 <p className="text-xs text-gray-500 mt-1">Percentage</p>
               </div>
+            </div>
+          )}
+
+          {/* Teacher Individual Graph */}
+          {filteredReport.length > 0 && (
+            <div className={`bg-white rounded-2xl p-6 mb-6 border border-gray-100 shadow-sm transition-all duration-500 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                <h2 className="text-lg font-bold text-gray-800 mb-2 sm:mb-0">Teacher Individual Graph</h2>
+                <div className="flex items-center gap-4 w-full sm:w-auto">
+                  <select
+                    value={selectedGraphKey}
+                    onChange={(e) => setSelectedGraphKey(e.target.value)}
+                    className="w-full sm:w-72 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 focus:outline-none transition-all text-sm"
+                  >
+                    {filteredReport.map((r) => (
+                      <option key={`${r.teacher_id}-${r.section_id}-${r.batch_id}`} value={`${r.teacher_id}-${r.section_id}-${r.batch_id}`}>
+                        {r.teacher_name} - {r.subject_name} ({r.section_name})
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={downloadGraph}
+                    className="p-2 rounded-xl font-semibold text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all border border-gray-200"
+                    title="Download Graph"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {selectedGraphRow ? (
+                <div className="h-80 w-full">
+                  <Bar ref={chartRef} data={chartData} options={chartOptions} />
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <p>Select a teacher to view the graph.</p>
+                </div>
+              )}
             </div>
           )}
 

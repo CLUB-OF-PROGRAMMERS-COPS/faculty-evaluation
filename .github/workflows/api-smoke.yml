@@ -1,0 +1,29 @@
+name: API Smoke Tests
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Newman
+        run: npm install -g newman
+
+      - name: Run Public Smoke Folder
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+        run: |
+          newman run testing/postman/faculty-eval.postman_collection.json \
+            --folder "Public Smoke" \
+            --env-var "baseUrl=${API_BASE_URL}"

@@ -1,0 +1,185 @@
+{
+  "info": {
+    "name": "Faculty Evaluation - API Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Public Smoke",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registration Status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/registration-status"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('Has registration fields', function () {",
+                  "  pm.expect(body).to.have.property('registration_open');",
+                  "  pm.expect(body).to.have.property('requires_code');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Student Flow",
+      "item": [
+        {
+          "name": "Register Student (Test User)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usn\": \"{{testUsn}}\",\n  \"password\": \"{{studentPassword}}\",\n  \"confirm_password\": \"{{studentPassword}}\",\n  \"section_id\": {{sectionId}},\n  \"registration_code\": \"{{registrationCode}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Student Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usn\": \"{{testUsn}}\",\n  \"password\": \"{{studentPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('studentToken', body.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fetch Teachers",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "url": "{{baseUrl}}/teachers?section_id={{sectionId}}"
+          }
+        },
+        {
+          "name": "Submit Feedback (Sample)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "url": "{{baseUrl}}/submit_feedback",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"section_id\": {{sectionId}},\n  \"batch_id\": {{batchId}},\n  \"ratings\": [\n    {\n      \"teacher_id\": 1,\n      \"scores\": {\n        \"q1\": 5, \"q2\": 4, \"q3\": 5, \"q4\": 4, \"q5\": 5,\n        \"q6\": 4, \"q7\": 5, \"q8\": 4, \"q9\": 5, \"q10\": 4\n      },\n      \"comments\": \"Good teaching\"\n    }\n  ]\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/admin/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('adminToken', body.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/admin/stats"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "https://your-render-service.onrender.com" },
+    { "key": "testUsn", "value": "1CK23CS999" },
+    { "key": "studentPassword", "value": "pass1234" },
+    { "key": "sectionId", "value": "1" },
+    { "key": "batchId", "value": "1" },
+    { "key": "registrationCode", "value": "" },
+    { "key": "adminUsername", "value": "admin" },
+    { "key": "adminPassword", "value": "DELETE-CONFIRM" },
+    { "key": "studentToken", "value": "" },
+    { "key": "adminToken", "value": "" }
+  ]
+}

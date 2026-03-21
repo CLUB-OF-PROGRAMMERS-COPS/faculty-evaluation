@@ -198,7 +198,7 @@ def registration_status(db: Session = Depends(get_db)):
     )
 
 @app.post("/register", status_code=status.HTTP_201_CREATED)
-@limiter.limit("1/hour")  # 1 registration per IP per hour (students use mobile data = unique IP)
+@limiter.limit("60/hour")  # classroom-safe limit for burst student registrations
 def register(request: Request, payload: StudentRegister, db: Session = Depends(get_db)):
     # ── Registration gate check ──
     settings = get_settings(db)
@@ -301,7 +301,7 @@ def get_teachers(
 # ── Submit Feedback (Atomic Transaction) ────────────────
 
 @app.post("/submit_feedback", status_code=status.HTTP_201_CREATED)
-@limiter.limit("5/hour")  # Max 5 feedback submissions per IP per hour
+@limiter.limit("120/hour")  # classroom-safe limit for submission bursts
 def submit_feedback(
     request: Request,
     payload: FeedbackSubmission,
