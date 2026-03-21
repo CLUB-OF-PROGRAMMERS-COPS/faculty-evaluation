@@ -11,12 +11,17 @@ const RATING_LABELS = {
   1: "Poor",
 };
 
+const CYAN_STYLE = {
+  selected: "bg-[#00FFFF] text-black shadow-lg shadow-cyan-500/25 scale-105",
+  hover: "hover:bg-[#00FFFF] hover:text-black hover:border-[#00FFFF]"
+};
+
 const RATING_COLORS = {
-  5: { selected: "bg-emerald-600 text-white shadow-lg shadow-emerald-500/25 scale-105", hover: "hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300" },
-  4: { selected: "bg-blue-600 text-white shadow-lg shadow-blue-500/25 scale-105", hover: "hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300" },
-  3: { selected: "bg-amber-500 text-white shadow-lg shadow-amber-500/25 scale-105", hover: "hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300" },
-  2: { selected: "bg-orange-500 text-white shadow-lg shadow-orange-500/25 scale-105", hover: "hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300" },
-  1: { selected: "bg-red-500 text-white shadow-lg shadow-red-500/25 scale-105", hover: "hover:bg-red-50 hover:text-red-700 hover:border-red-300" },
+  5: CYAN_STYLE,
+  4: CYAN_STYLE,
+  3: CYAN_STYLE,
+  2: CYAN_STYLE,
+  1: CYAN_STYLE,
 };
 
 const CRITERIA_LABELS = [
