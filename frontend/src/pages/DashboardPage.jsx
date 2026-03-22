@@ -115,7 +115,24 @@ export default function DashboardPage() {
       navigate("/thank-you", { replace: true });
     } catch (err) {
       if (err.response?.status === 0 || !err.response) {
-        toast.error("Connection failed — Retrying…");
+        toast.error("Connection failed — retrying in 2s…");
+        // Actual retry after 2 seconds
+        setTimeout(async () => {
+          try {
+            await submitFeedback({
+              section_id: sectionId,
+              batch_id: batchId,
+              ratings: ratingsPayload,
+            });
+            toast.success("Feedback submitted on retry!");
+            localStorage.removeItem("token");
+            navigate("/thank-you", { replace: true });
+          } catch (retryErr) {
+            toast.error("Retry failed — please click Submit again.");
+            setSubmitting(false);
+          }
+        }, 2000);
+        return; // Don't set submitting=false yet, retry is in progress
       } else {
         toast.error(err.response?.data?.detail || "Submission failed.");
       }

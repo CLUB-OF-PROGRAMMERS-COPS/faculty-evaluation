@@ -61,8 +61,8 @@ export default function TeacherAccordion({
 }) {
   const [open, setOpen] = useState(false);
 
-  const answeredCount = Object.values(scores).filter(
-    (v) => v !== null && v !== undefined
+  const answeredCount = Object.entries(scores).filter(
+    ([k, v]) => k.startsWith("q") && v !== null && v !== undefined
   ).length;
   const isComplete = answeredCount === 10;
 

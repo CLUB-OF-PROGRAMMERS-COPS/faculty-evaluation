@@ -70,6 +70,12 @@ load_dotenv()
 ADMIN_USERNAME: str = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "DELETE-CONFIRM")
 
+# Burst-friendly defaults for classroom starts; override via env in production.
+REGISTER_RATE_LIMIT: str = os.getenv("REGISTER_RATE_LIMIT", "240/minute")
+LOGIN_RATE_LIMIT: str = os.getenv("LOGIN_RATE_LIMIT", "360/minute")
+SUBMIT_RATE_LIMIT: str = os.getenv("SUBMIT_RATE_LIMIT", "240/minute")
+ADMIN_LOGIN_RATE_LIMIT: str = os.getenv("ADMIN_LOGIN_RATE_LIMIT", "20/minute")
+
 # ── CORS origins (production + local dev) ────────────────
 FRONTEND_URL = os.getenv("FRONTEND_URL", "")   # e.g. https://your-app.vercel.app
 ALLOWED_ORIGINS = [
@@ -114,7 +120,15 @@ async def lifespan(app: FastAPI):
 
 
 # ── Rate Limiter Setup ──────────────────────────────────
-limiter = Limiter(key_func=get_remote_address)
+def get_client_ip(request: Request) -> str:
+    """Resolve best-effort client IP, preferring proxy-forwarded origin."""
+    forwarded_for = request.headers.get("x-forwarded-for", "").strip()
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return get_remote_address(request)
+
+
+limiter = Limiter(key_func=get_client_ip)
 
 app = FastAPI(
     title="Automated Faculty Evaluation System",
@@ -144,13 +158,15 @@ def parse_usn(usn: str) -> str:
     Extract the 2-digit batch year from a USN and return the full year.
     Example: '1CK23CS020' → '2023'
 
-    USN pattern assumed: <college><2-digit-year><branch><roll>
+    USN pattern: <college-prefix><2-digit-year><branch><roll>
+    College prefix can be alphanumeric (e.g. '1CK', 'RNSIT', 'BMS').
+    The batch year is the first pair of digits followed by letters (branch).
     """
-    match = re.search(r"[A-Za-z]{2,4}(\d{2})", usn)
+    match = re.search(r"[A-Za-z0-9]{2,5}(\d{2})[A-Za-z]", usn, re.IGNORECASE)
     if not match:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid USN format – cannot extract batch year.",
+            detail="Invalid USN format – cannot extract batch year. Expected format like 1CK23CS001.",
         )
     year_short = match.group(1)
     return f"20{year_short}"
@@ -198,7 +214,7 @@ def registration_status(db: Session = Depends(get_db)):
     )
 
 @app.post("/register", status_code=status.HTTP_201_CREATED)
-@limiter.limit("60/hour")  # classroom-safe limit for burst student registrations
+@limiter.limit(REGISTER_RATE_LIMIT)
 def register(request: Request, payload: StudentRegister, db: Session = Depends(get_db)):
     # ── Registration gate check ──
     settings = get_settings(db)
@@ -257,7 +273,7 @@ def register(request: Request, payload: StudentRegister, db: Session = Depends(g
 # ── Login ───────────────────────────────────────────────
 
 @app.post("/login", response_model=TokenResponse)
-@limiter.limit("10/minute")  # Max 10 login attempts per IP per minute
+@limiter.limit(LOGIN_RATE_LIMIT)
 def login(request: Request, payload: StudentLogin, db: Session = Depends(get_db)):
     student = (
         db.query(Student)
@@ -301,7 +317,7 @@ def get_teachers(
 # ── Submit Feedback (Atomic Transaction) ────────────────
 
 @app.post("/submit_feedback", status_code=status.HTTP_201_CREATED)
-@limiter.limit("120/hour")  # classroom-safe limit for submission bursts
+@limiter.limit(SUBMIT_RATE_LIMIT)
 def submit_feedback(
     request: Request,
     payload: FeedbackSubmission,
@@ -362,13 +378,35 @@ def submit_feedback(
 # ── Admin: Login ────────────────────────────────────────
 
 @app.post("/admin/login", response_model=AdminTokenResponse)
-@limiter.limit("5/minute")  # Max 5 admin login attempts per IP per minute
+@limiter.limit(ADMIN_LOGIN_RATE_LIMIT)
 def admin_login(request: Request, payload: AdminLogin, db: Session = Depends(get_db)):
     # Query all admins and match with trimmed username (handles trailing spaces in DB)
     admins = db.query(Admin).all()
     admin = next((a for a in admins if a.username.strip() == payload.username.strip()), None)
-    if not admin or admin.password_hash.strip() != payload.password:
+
+    if not admin:
         raise HTTPException(status_code=401, detail="Invalid admin credentials.")
+
+    stored = (admin.password_hash or "").strip()
+    password_ok = False
+
+    # Primary path: hashed verification (same strategy as student auth).
+    if stored:
+        try:
+            password_ok = verify_password(payload.password, stored)
+        except Exception:
+            password_ok = False
+
+    # Backward-compatible path: migrate legacy plaintext admin password to bcrypt.
+    if not password_ok and stored and stored == payload.password:
+        admin.password_hash = hash_password(payload.password)
+        db.add(admin)
+        db.commit()
+        password_ok = True
+
+    if not password_ok:
+        raise HTTPException(status_code=401, detail="Invalid admin credentials.")
+
     token = create_access_token(data={"sub": admin.username.strip(), "role": "admin"})
     return AdminTokenResponse(access_token=token)
 

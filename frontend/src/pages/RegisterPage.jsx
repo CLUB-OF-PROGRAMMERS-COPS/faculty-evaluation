@@ -3,9 +3,10 @@ import { useNavigate, Link } from "react-router-dom";
 import { registerStudent, fetchSectionsByBatch, fetchRegistrationStatus } from "../api";
 import toast from "react-hot-toast";
 
-// Extract batch year from USN (e.g., "1CK23CS020" → "2023")
+// Extract batch year from USN (e.g., "1CK23CS001" → "2023")
+// Prefix can be alphanumeric (e.g. 1CK, RNSIT, BMS)
 function parseBatchFromUSN(usn) {
-  const match = usn.match(/[A-Za-z]{2,4}(\d{2})/);
+  const match = usn.match(/[A-Za-z0-9]{2,5}(\d{2})[A-Za-z]/i);
   if (match) {
     return `20${match[1]}`;
   }
