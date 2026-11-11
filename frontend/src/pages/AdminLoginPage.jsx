@@ -35,8 +35,7 @@ export default function AdminLoginPage() {
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage:
-            "url('https://cbitkolar.edu.in/wp-content/uploads/2025/07/01-4.jpg')",
+          backgroundImage: "url('/image.png')",
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/90 via-slate-900/85 to-slate-900/95" />

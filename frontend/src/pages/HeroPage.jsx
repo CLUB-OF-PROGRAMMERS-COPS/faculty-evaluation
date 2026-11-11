@@ -14,8 +14,7 @@ export default function HeroPage() {
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage:
-            "url('https://cbitkolar.edu.in/wp-content/uploads/2025/07/01-4.jpg')",
+          backgroundImage: "url('/image.png')",
         }}
       >
         {/* Dark Overlay with Gradient */}
